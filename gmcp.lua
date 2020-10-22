@@ -9,20 +9,8 @@ mod.GMCP = {
 
 mod.listeners = {}
 
-function mod.listen(s, priority, cb)
-    if not priority then
-        priority = 3
-    end
-    if type(priority) == "function" then
-        cb = priority
-        priority = 3
-    end
-    mod.listeners[s] = mod.listeners[s] or {{}, {}, {}, {}, {}}
-    local tbl = mod.listeners[s][priority]
-    tbl[#tbl + 1] = cb
-end
-
 local function register_listener(s)
+    mod.listeners[s] = mod.listeners[s] or {{}, {}, {}, {}, {}}
     gmcp.receive(s, function(encoded_data)
         if not mod.listeners[s] then return end
         local data = json.decode(encoded_data)
@@ -32,6 +20,21 @@ local function register_listener(s)
             end
         end
     end)
+end
+
+function mod.listen(s, priority, cb)
+    if not priority then
+        priority = 3
+    end
+    if type(priority) == "function" then
+        cb = priority
+        priority = 3
+    end
+    if not mod.listeners[s] then
+        register_listener(s)
+    end
+    local tbl = mod.listeners[s][priority]
+    tbl[#tbl + 1] = cb
 end
 
 local gmcp_modules = {
@@ -47,23 +50,6 @@ local gmcp_modules = {
     "Redirect"
 }
 
-local gmcp_messages = {
-    "Char.Vitals",
-    "Comm.Channel.List",
-    "Comm.Channel.Text",
-    "Redirect.Window",
-    "Room.Info",
-    "IRE.Tasks.List",
-    "IRE.Tasks.Update",
-    "IRE.Tasks.Completed",
-    "IRE.Sound.Preload",
-    "IRE.Sound.Play",
-    "IRE.Display.Ohmap",
-    "IRE.Target.Info",
-    "IRE.Target.Set",
-    "IRE.Target.Request"
-}
-
 mod.listen("Char.Vitals", function(data)
     mod.GMCP.char.vitals = data
 end)
@@ -73,10 +59,6 @@ gmcp.on_ready(function()
 
     for _, module in pairs(gmcp_modules) do
         gmcp.register(module)
-    end
-
-    for _, message in pairs(gmcp_messages) do
-        register_listener(message)
     end
 
     --[[
