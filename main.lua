@@ -1,6 +1,6 @@
 package.path = "/home/xandaros/mud/starmourn/scripts/?.lua;" .. package.path
 
-require("bindings.lua")
+require("bindings")
 local gmcp = require("gmcp")
 local status = require("status")
 local targets = require("targets")
