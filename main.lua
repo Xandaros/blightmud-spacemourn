@@ -2,6 +2,7 @@ package.path = "/home/xandaros/mud/starmourn/scripts/?.lua;" .. package.path
 
 require("bindings")
 local gmcp = require("gmcp")
+local outputlistener = require("outputlistener")
 local status = require("status")
 local targets = require("targets")
 local tasks = require("tasks")
@@ -10,6 +11,7 @@ local windup = require("windup")
 
 _G.my = {
     gmcp = gmcp,
+    outputlistener = outputlistener,
     status = status,
     targets = targets,
     tasks = tasks,

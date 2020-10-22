@@ -1,4 +1,5 @@
 local gmcp = require("gmcp")
+local outputlistener = require("outputlistener")
 
 local mod = {}
 
@@ -6,6 +7,13 @@ mod.target = {id = "", short_desc = "", hpperc = ""}
 mod.targets = {}
 mod.target_idx = 1
 mod.inhibitors = {}
+
+local health_indicators = {
+    "healthy",
+    "wounded",
+    "maimed",
+    "critically wounded"
+}
 
 function mod.fixTargetIdx()
     if not mod.target.id then return end
@@ -54,23 +62,21 @@ function mod.inhibit(inhibitor)
     mod.inhibitors[inhibitor] = true
 end
 
-local targetsUpdating = false
 function mod.updateTargets()
     if #mod.inhibitors > 0 then return end
-    if targetsUpdating then return end
-    targetsUpdating = true
-    local trigger = blight:add_trigger("^([a-zA-Z]+[0-9]+)\\s+(.*)$", {gag = true, count = 15}, function(matches)
-        if string.find(matches[3], "%([^)]+%)") then
-            mod.targets[#mod.targets + 1] = matches[2]
-        end
-    end)
-    blight:add_trigger("^Total: |Error", {gag = true, count = 1}, function()
-        blight:remove_trigger(trigger)
-        targetsUpdating = false
-    end)
     mod.targets = {}
     mod.target_idx = 1
-    blight:send("info here", {gag = true, skip_log = true})
+
+    outputlistener.listen("info here", "^Total: |Error", function(matches)
+        for _, match in ipairs(matches) do
+            for _, indicator in ipairs(health_indicators) do
+                if string.find(match[3], "%(" .. indicator .. "%)") then
+                    mod.targets[#mod.targets + 1] = match[2]
+                    break
+                end
+            end
+        end
+    end, {gag = true, regex = "^([a-zA-Z]+[0-9]+)\\s+(.*)$"})
 end
 
 blight:bind("\x1b[1;5D", function()
